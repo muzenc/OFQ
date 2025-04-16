@@ -602,6 +602,7 @@ def create_teacher_model(args):
             num_classes=args.num_classes,
             drop_path=args.drop_path,
             pretrained=args.teacher_pretrained,
+            checkpoint_path=args.teacher_checkpoint,
             qqkkvv=args.kd_hard_and_soft == 2 or args.kd_hard_and_soft == 3,
         )
 
@@ -610,7 +611,9 @@ def create_teacher_model(args):
         args.aq_bitw = 4
         teacher = get_qat_model(teacher, args)
     if args.teacher_pretrained and args.teacher_checkpoint != "":
-        load_checkpoint(teacher, args.teacher_checkpoint, strict=True)
+        # load_checkpoint(teacher, args.teacher_checkpoint, strict=True)
+        checkpoint = torch.load(args.teacher_checkpoint, map_location="cpu")
+        teacher.load_state_dict(checkpoint["model"], strict=True)
     return teacher
 
 
@@ -700,11 +703,17 @@ def main(local_rank, args):
     else:
         print("check other branch")
 
+    if args.initial_checkpoint != "":
+        checkpoint = torch.load(args.initial_checkpoint, map_location="cpu")
+        model.load_state_dict(checkpoint["model"], strict=True)
+
     if args.quantized:
         model = get_qat_model(model, args)
 
-    if args.initial_checkpoint != "":
-        load_checkpoint(model, args.initial_checkpoint, strict=False)
+    # if args.initial_checkpoint != "":
+    #     # load_checkpoint(model, args.initial_checkpoint, strict=False)
+    #     checkpoint = torch.load(args.initial_checkpoint, map_location="cpu")
+    #     model.load_state_dict(checkpoint["model"], strict=True)
 
     if args.num_classes is None:
         assert hasattr(model, "num_classes"), "Model must have `num_classes` attr if not set on cmd line/config."

@@ -1,5 +1,5 @@
 dataset: imagenet
-num_classes: 1000
+num_classes: 10
 img_size: 224
 mean:
     - 0.485
